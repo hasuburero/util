@@ -1,4 +1,4 @@
-package byte
+package byteutils
 
 import (
 	"errors"

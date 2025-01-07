@@ -1,7 +1,6 @@
 package byteutils
 
 import (
-	"bytes"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -34,11 +33,7 @@ func Byte2Int32(arg1 []byte) (int32, error) {
 		byte_buf = append(byte_buf, 0x00)
 	}
 	byte_buf = append(byte_buf, arg1...)
-	buf := bytes.NewReader(byte_buf)
-	err := binary.Read(buf, binary.BigEndian, &result)
-	if err != nil {
-		return result, err
-	}
+	result = int32(binary.BigEndian.Uint32(byte_buf))
 	return result, nil
 }
 
@@ -53,30 +48,20 @@ func Byte2Int64(arg1 []byte) (int64, error) {
 		byte_buf = append(byte_buf, 0x00)
 	}
 	byte_buf = append(byte_buf, arg1...)
-	buf := bytes.NewReader(byte_buf)
-	err := binary.Read(buf, binary.BigEndian, &result)
-	if err != nil {
-		return result, err
-	}
+	result = int64(binary.BigEndian.Uint64(byte_buf))
 	return result, nil
 }
 
-func Int322Byte(arg1 []byte, arg2 int32) error {
+func Int322Byte(arg2 int32) ([]byte, error) {
 	result := make([]byte, 4)
 	binary.BigEndian.PutUint32(result, uint32(arg2))
-	PrintByte(result)
-	copy(arg1, result)
-	PrintByte(arg1)
-	return nil
+	return result, nil
 }
 
-func Int642Byte(arg1 []byte, arg2 int64) error {
+func Int642Byte(arg2 int64) ([]byte, error) {
 	result := make([]byte, 8)
 	binary.BigEndian.PutUint64(result, uint64(arg2))
-	PrintByte(result)
-	arg1 = result
-	PrintByte(arg1)
-	return nil
+	return result, nil
 }
 
 func Bytecmp(arg1, arg2 []byte) bool {

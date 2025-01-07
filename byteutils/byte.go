@@ -30,7 +30,7 @@ func Byte2Int32(arg1 []byte) (int32, error) {
 		return 0, errors.New("out of range int32")
 	}
 	byte_buf := []byte{}
-	for _ = range 4 - arglen {
+	for range 4 - arglen {
 		byte_buf = append(byte_buf, 0x00)
 	}
 	buf := bytes.NewReader(byte_buf)
@@ -48,7 +48,7 @@ func Byte2Int64(arg1 []byte) (int64, error) {
 		return 0, errors.New("out of range int64")
 	}
 	byte_buf := []byte{}
-	for _ = range 8 - arglen {
+	for range 8 - arglen {
 		byte_buf = append(byte_buf, 0x00)
 	}
 	buf := bytes.NewReader(byte_buf)

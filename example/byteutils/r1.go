@@ -65,14 +65,16 @@ func main() {
 
 	var a int32 = 1
 	var b int64 = 2
-	byte_buf1, err := byteutils.Int322Byte(a)
+	var byte_buf1 []byte
+	var byte_buf2 []byte
+	err = byteutils.Int322Byte(byte_buf1, a)
 	if err != nil {
 		fmt.Println(err)
 		fmt.Println("byteutils.Int322Byte error")
 	} else {
 		byteutils.PrintByte(byte_buf1)
 	}
-	byte_buf2, err := byteutils.Int642Byte(b)
+	err = byteutils.Int642Byte(byte_buf2, b)
 	if err != nil {
 		fmt.Println(err)
 		fmt.Println("byteutils.Int642Byte error")

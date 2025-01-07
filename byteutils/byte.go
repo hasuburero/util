@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"fmt"
 )
 
 const (
@@ -91,4 +92,11 @@ func Bytecmp(arg1, arg2 []byte) bool {
 	}
 
 	return true
+}
+
+func PrintByte(arg1 []byte) {
+	for _, ctx := range arg1 {
+		fmt.Printf("%x ", ctx)
+	}
+	fmt.Println("")
 }

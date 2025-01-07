@@ -24,7 +24,7 @@ func ByteSize(arg uint) int {
 }
 
 func Byte2Int32(arg1 []byte) (int32, error) {
-	var result int32 = 0
+	var result int32
 	arglen := len(arg1)
 	if arglen > 4 {
 		return 0, errors.New("out of range int32")
@@ -33,6 +33,7 @@ func Byte2Int32(arg1 []byte) (int32, error) {
 	for i := 0; i < 4-arglen; i++ {
 		byte_buf = append(byte_buf, 0x00)
 	}
+	byte_buf = append(byte_buf, arg1...)
 	buf := bytes.NewReader(byte_buf)
 	err := binary.Read(buf, binary.BigEndian, &result)
 	if err != nil {
@@ -51,6 +52,7 @@ func Byte2Int64(arg1 []byte) (int64, error) {
 	for i := 0; i < 8-arglen; i++ {
 		byte_buf = append(byte_buf, 0x00)
 	}
+	byte_buf = append(byte_buf, arg1...)
 	buf := bytes.NewReader(byte_buf)
 	err := binary.Read(buf, binary.BigEndian, &result)
 	if err != nil {
@@ -59,24 +61,22 @@ func Byte2Int64(arg1 []byte) (int64, error) {
 	return result, nil
 }
 
-func Int322Byte(arg1 int32) ([]byte, error) {
+func Int322Byte(arg1 []byte, arg2 int32) error {
 	result := make([]byte, 4)
-	buf := bytes.NewBuffer(result)
-	err := binary.Write(buf, binary.BigEndian, arg1)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
+	binary.BigEndian.PutUint32(result, uint32(arg2))
+	PrintByte(result)
+	copy(arg1, result)
+	PrintByte(arg1)
+	return nil
 }
 
-func Int642Byte(arg1 int64) ([]byte, error) {
+func Int642Byte(arg1 []byte, arg2 int64) error {
 	result := make([]byte, 8)
-	buf := bytes.NewBuffer(result)
-	err := binary.Write(buf, binary.BigEndian, arg1)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
+	binary.BigEndian.PutUint64(result, uint64(arg2))
+	PrintByte(result)
+	arg1 = result
+	PrintByte(arg1)
+	return nil
 }
 
 func Bytecmp(arg1, arg2 []byte) bool {

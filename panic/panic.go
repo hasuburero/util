@@ -10,7 +10,7 @@ type Handler struct {
 	Channels []chan os.Signal
 }
 
-var Error chan error
+var Error chan error = make(chan error)
 
 func (self *Handler) Add(ch chan os.Signal) {
 	self.AddChan <- ch

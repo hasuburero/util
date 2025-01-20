@@ -3,14 +3,14 @@ package panic
 import (
 	"fmt"
 	"os"
-	"os/signal"
-	"syscall"
 )
 
 type Handler struct {
 	AddChan  chan chan os.Signal
 	Channels []chan os.Signal
 }
+
+var Error chan error
 
 func (self *Handler) Add(ch chan os.Signal) {
 	self.AddChan <- ch
@@ -29,12 +29,15 @@ func (self *Handler) Start() {
 		select {
 		case newChannel := <-self.AddChan:
 			self.Channels = append(self.Channels, newChannel)
+		case err := <-Error:
+			fmt.Println(err)
+			os.Exit(1)
 		default:
 			for _, ctx := range self.Channels {
 				select {
 				case sig := <-ctx:
 					fmt.Println("signal received")
-					fmt.Println("sig: %d\n", sig)
+					fmt.Printf("sig: %d\n", sig)
 					os.Exit(1)
 				default:
 				}

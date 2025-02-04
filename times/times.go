@@ -7,6 +7,10 @@ import (
 	"time"
 )
 
+const (
+	Layout1 = "2006-01-02 15:04:05.000000"
+)
+
 type TimeStamp struct {
 	Timer     time.Time
 	Timestamp string // formatted with time.StampMilli

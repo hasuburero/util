@@ -76,7 +76,7 @@ func MakeWriter(filename string, column []string) (*LogWriter, error) {
 		return nil, err
 	}
 
-	writer.Chan = make(chan []string)
+	writer.Chan = make(chan []string, 10)
 	writer.WritingThread()
 
 	return writer, nil

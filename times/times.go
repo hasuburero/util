@@ -1,7 +1,6 @@
 package times
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 	"time"

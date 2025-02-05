@@ -41,6 +41,49 @@ func (self *LogWriter) WritingThread() {
 	}()
 }
 
+func MakeWriterWithOverride(filename string, column []string) (*LogWriter, error) {
+	if len(column) == 0 {
+		return nil, errors.New("column has zero length")
+	}
+	col := ""
+	for i, length := 0, len(column); ; i++ {
+		if column[i] == "" {
+			buf := fmt.Sprintf("empty column name, index:%d", i)
+			return nil, errors.New(buf)
+		}
+		col += column[i]
+		if i != length-1 {
+			col += ","
+		} else {
+			col += "\n"
+			break
+		}
+	}
+
+	_, err := os.Stat(filename)
+	if err == nil {
+		err = os.Remove(filename)
+		if err != nil {
+			return nil, err
+		}
+	}
+	fd, err := os.Create(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	writer := &LogWriter{Filename: filename, Fd: fd, Column: column}
+
+	_, err = writer.Fd.WriteString(col)
+	if err != nil {
+		return nil, err
+	}
+
+	writer.Chan = make(chan []string, 10)
+	writer.WritingThread()
+
+	return writer, nil
+}
 func MakeWriter(filename string, column []string) (*LogWriter, error) {
 	if len(column) == 0 {
 		return nil, errors.New("column has zero length")

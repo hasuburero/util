@@ -13,6 +13,10 @@ type LogWriter struct {
 	Chan     chan []string
 }
 
+func (self *LogWriter) ErrorHandler() {
+	self.Fd.Close()
+}
+
 func (self *LogWriter) WritingThread() {
 	go func() {
 		for {

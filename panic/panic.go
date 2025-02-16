@@ -1,47 +1,74 @@
 package panic
 
 import (
+	"errors"
 	"fmt"
 	"os"
+	"os/signal"
+	"sync"
 )
 
-type Handler struct {
-	AddChan  chan chan os.Signal
-	Channels []chan os.Signal
+var Err chan error
+var addchan chan func()
+var handler []func()
+var running bool = false
+var mux sync.Mutex
+
+func Add(fn func()) error {
+	mux.Lock()
+	if running {
+		mux.Unlock()
+		return errors.New("panic handler is not running")
+	}
+	mux.Unlock()
+	addchan <- fn
+	return nil
 }
 
-var Error chan error = make(chan error)
+func Error(err error) {
+	mux.Lock()
+	if running {
+		mux.Unlock()
+		fmt.Println("panic handler is not running")
+		os.Exit(2)
+	}
+	mux.Unlock()
 
-func (self *Handler) Add(ch chan os.Signal) {
-	self.AddChan <- ch
+	Err <- err
 }
 
-func Init() Handler {
-	var handler_instance Handler
-	addchan := make(chan chan os.Signal)
-	channels := make([]chan os.Signal, 0)
-	handler_instance = Handler{addchan, channels}
-	return handler_instance
+func execHandle() {
+	for _, ctx := range handler {
+		ctx()
+	}
 }
 
-func (self *Handler) Start() {
+func Start() error {
+	mux.Lock()
+	if running {
+		mux.Unlock()
+		return errors.New("panic handler is already running")
+	}
+	mux.Unlock()
+	sigch := make(chan os.Signal, 1)
+	signal.Notify(sigch, os.Interrupt)
+	Err = make(chan error)
+	addchan = make(chan func())
 	go func() {
-		select {
-		case newChannel := <-self.AddChan:
-			self.Channels = append(self.Channels, newChannel)
-		case err := <-Error:
-			fmt.Println(err)
-			os.Exit(1)
-		default:
-			for _, ctx := range self.Channels {
-				select {
-				case sig := <-ctx:
-					fmt.Println("signal received")
-					fmt.Printf("sig: %d\n", sig)
-					os.Exit(1)
-				default:
-				}
+		for {
+			select {
+			case newfunc := <-addchan:
+				handler = append(handler, newfunc)
+			case err := <-Err:
+				fmt.Println(err)
+				execHandle()
+				os.Exit(2)
+			case sig := <-sigch:
+				fmt.Println("signal received!! ", sig)
+				execHandle()
+				os.Exit(2)
 			}
 		}
 	}()
+	return nil
 }

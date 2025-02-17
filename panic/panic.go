@@ -60,6 +60,7 @@ func Start() error {
 			case newfunc := <-addchan:
 				handler = append(handler, newfunc)
 			case err := <-Err:
+				fmt.Println("Error received!!")
 				fmt.Println(err)
 				execHandle()
 				os.Exit(2)

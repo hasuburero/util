@@ -45,6 +45,10 @@ func (self *LogWriter) WritingThread() {
 	}()
 }
 
+func (self *LogWriter) Write(logbuf []string) {
+	self.Chan <- logbuf
+}
+
 func MakeWriterWithOverride(filename string, column []string) (*LogWriter, error) {
 	if len(column) == 0 {
 		return nil, errors.New("column has zero length")
@@ -88,6 +92,7 @@ func MakeWriterWithOverride(filename string, column []string) (*LogWriter, error
 
 	return writer, nil
 }
+
 func MakeWriter(filename string, column []string) (*LogWriter, error) {
 	if len(column) == 0 {
 		return nil, errors.New("column has zero length")

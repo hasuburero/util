@@ -8,7 +8,8 @@ import (
 
 func main() {
 	panic.Start()
-	resource.Start(1000, "output.csv")
+	resource.StartCPU(1000, "cpuoutput.csv")
+	resource.StartMEM(1000, "memoutput.csv")
 	time.Sleep(time.Duration(10 * time.Second))
 	return
 }

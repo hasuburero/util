@@ -42,24 +42,25 @@ func (self *StdPipe) Read() (int, error) {
 }
 
 func (self *StdPipe) Write(arg string) error {
-	_, err := io.Copy(self.StdinPipe, bytes.NewBuffer([]byte(arg)))
+	_, err := io.Copy(self.StdinPipe, bytes.NewBufferString(arg))
 	return err
 }
 
-func InitPipe(cmd *exec.Cmd, bufsize int) (StdPipe, error) {
-	var stdpipe StdPipe
+func InitPipe(cmd *exec.Cmd, bufsize int) (*StdPipe, error) {
+	var stdpipe *StdPipe = new(StdPipe)
 	var err error
 	stdpipe.StdinPipe, err = cmd.StdinPipe()
+	//stdpipe.StdinPipe, err = cmd.StdinPipe()
 	if err != nil {
-		return StdPipe{}, err
+		return nil, err
 	}
 	stdpipe.StdoutPipe, err = cmd.StdoutPipe()
 	if err != nil {
-		return StdPipe{}, err
+		return nil, err
 	}
 	stdpipe.StderrPipe, err = cmd.StderrPipe()
 	if err != nil {
-		return StdPipe{}, err
+		return nil, err
 	}
 
 	stdpipe.Output_buf = make([]byte, bufsize)

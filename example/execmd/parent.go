@@ -14,7 +14,7 @@ var (
 func main() {
 	cmd := exec.Command(cmd, args...)
 	//stdpipe, err := execmd.InitPipe(cmd, 1024)
-	var stdpipe *StdPipe = new(StdPipe)
+	var stdpipe *execmd.StdPipe = new(execmd.StdPipe)
 	var err error
 	stdpipe.StdinPipe, err = cmd.StdinPipe()
 	//stdpipe.StdinPipe, err = cmd.StdinPipe()
@@ -43,11 +43,6 @@ func main() {
 	//	return
 	//}
 
-	err = cmd.Start()
-	if err != nil {
-		fmt.Println(err)
-	}
-
 	//var bytebuf = make([]byte, 1024)
 	//n, err := outpipe.Read(bytebuf)
 	//if err != nil {
@@ -57,6 +52,7 @@ func main() {
 	//fmt.Println(bytebuf[:n])
 
 	go func() {
+		fmt.Println("Writing")
 		err := stdpipe.Write("Hello World\n")
 		if err != nil {
 			fmt.Println(err)
@@ -66,8 +62,8 @@ func main() {
 			return
 		}
 
+		fmt.Println("Reading")
 		n, err := stdpipe.StdoutPipe.Read(stdpipe.Output_buf)
-		fmt.Println(string(stdpipe.Output_buf[:n]))
 		if err != nil {
 			fmt.Println(err)
 			fmt.Println("failed to read")
@@ -75,6 +71,7 @@ func main() {
 			cmd.Process.Kill()
 			return
 		}
+		fmt.Println(string(stdpipe.Output_buf[:n]))
 		//n, err := stdpipe.Read()
 		//if err != nil {
 		//	fmt.Println(err)
@@ -87,6 +84,11 @@ func main() {
 
 		cmd.Process.Kill()
 	}()
+
+	err = cmd.Start()
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	fmt.Printf("Pid: %d\n", cmd.Process.Pid)
 	cmd.Wait()

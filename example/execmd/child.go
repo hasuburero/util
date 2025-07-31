@@ -10,6 +10,7 @@ func main() {
 		input, err := execmd.Read()
 		if err != nil {
 			fmt.Errorf("%v", err)
+			return
 		}
 		fmt.Println(string(input))
 	}

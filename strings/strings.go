@@ -1,8 +1,6 @@
 package strings
 
-import (
-	"strings"
-)
+import ()
 
 func TrimSlice(args []string, trim string) []string {
 	for i, v := range args {

@@ -1,9 +1,9 @@
 package panic
 
+import ()
+
 import (
-	"fmt"
-	"strings"
-	"time"
+	"github.com/hasuburero/util/log"
 )
 
 const (
@@ -11,13 +11,5 @@ const (
 )
 
 func PrintError(err error) {
-	now := time.Now()
-	lf := ""
-	if !strings.Contains(err.Error(), "\n") {
-		lf = "\n"
-	}
-
-	fmt.Printf("[%v][error] %s%s", now.Format(Layout), err.Error(), lf)
-
-	return
+	log.PrintLog(err.Error(), "error")
 }

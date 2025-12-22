@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	writer, err := logwriter.MakeWriter("output.txt", []string{"timestamp", "1", "2", "3"})
+	writer, err := logwriter.MakeWriter("output/output1.txt", []string{"timestamp", "1", "2", "3"})
 	if err != nil {
 		fmt.Println(err)
 		fmt.Println("logwriter.MakeWriter error")

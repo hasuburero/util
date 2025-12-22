@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 )
 
 type LogWriter struct {
@@ -12,6 +13,10 @@ type LogWriter struct {
 	Column   []string
 	Chan     chan []string
 }
+
+const (
+	dirParm = 0755
+)
 
 func (self *LogWriter) ErrorHandler() {
 	self.Fd.Close()
@@ -109,6 +114,23 @@ func MakeWriter(filename string, column []string) (*LogWriter, error) {
 		} else {
 			col += "\n"
 			break
+		}
+	}
+
+	var filepath string
+	slice := strings.Split(filename, "/")
+	if len(slice) == 1 {
+	} else {
+		for i := 0; i < len(slice)-1; i++ {
+			filepath += slice[i] + "/"
+		}
+	}
+	fmt.Println(filepath)
+
+	if filepath != "" {
+		err := os.MkdirAll(filepath, dirParm)
+		if err != nil {
+			return nil, err
 		}
 	}
 

@@ -13,7 +13,8 @@ type Test struct {
 func main() {
 	rb := array.MakeRingBuffer(30)
 	for i := range 32 {
-		rb.Push(Test{A: i, B: float32(i)})
+		terminated := rb.Push(Test{A: i, B: float32(i)})
+		fmt.Println("terminated: ", terminated)
 		contents := rb.Get()
 		fmt.Println(contents)
 		fmt.Println(rb.Length)

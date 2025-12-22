@@ -19,13 +19,16 @@ func MakeRingBuffer(size int) *RingBuffer {
 	return rb
 }
 
-func (self *RingBuffer) Push(content BufferContent) {
+func (self *RingBuffer) Push(content BufferContent) BufferContent {
 	self.Content[self.Tail] = content
 	self.Tail = (self.Tail + 1) % (self.Size + 1)
 	if self.Tail == self.Head {
+		buf := self.Content[self.Head]
 		self.Head = (self.Head + 1) % (self.Size + 1)
+		return buf
 	} else {
 		self.Length += 1
+		return nil
 	}
 }
 

@@ -27,6 +27,7 @@ func ParseArgs(args []string) CmdArgs {
 	return new_args
 }
 
+// if the key not found in args, return error
 func (self CmdArgs) GetArgs(key string) ([]string, error) {
 	args, exists := self.args[key]
 	if !exists {

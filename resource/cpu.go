@@ -8,25 +8,6 @@ import (
 	"time"
 )
 
-type CPUStat struct {
-	Prev    CPU
-	Current CPU
-}
-
-type CPU struct {
-	Usage   float32
-	Ts      time.Time
-	Total   int
-	User    int
-	Nice    int
-	Sys     int
-	Idle    int
-	IOwait  int
-	Irq     int
-	Softirq int
-	Steal   int
-}
-
 const (
 // statfile    = "/proc/stat"
 // meminfofile = "/proc/meminfo"
@@ -102,16 +83,4 @@ func (self *CPUStat) GetCPU() error {
 	self.Prev = self.Current
 
 	return nil
-}
-
-func Init() (CPUStat, error) {
-	var cpu CPUStat
-	ts, slice, err := ReadStat()
-	if err != nil {
-		return CPUStat{}, err
-	}
-
-	err = calcTotal(&cpu.Prev, slice, ts)
-
-	return cpu, nil
 }

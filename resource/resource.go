@@ -11,15 +11,25 @@ import (
 	"time"
 )
 
-type Resource_Struct struct {
-	Interval  int
+type Resource struct {
 	Logwriter *logwriter.LogWriter
-	Current   CPUTime
-	Prev      CPUTime
+	CPUStat
+	MEMStat
 }
 
-type CPUTime struct {
+type MEMStat struct {
+	Total     int
+	Available int
+	Ts        time.Time
+}
+type CPUStat struct {
+	Prev    CPU
+	Current CPU
+}
+
+type CPU struct {
 	Usage   float32
+	Ts      time.Time
 	Total   int
 	User    int
 	Nice    int
@@ -36,14 +46,10 @@ const (
 	meminfofile = "/proc/meminfo"
 )
 
-var cpu_resource_instance *Resource_Struct
-var mem_resource_instance *Resource_Struct
-var cpu_column []string = []string{"Timestamp", "Usage%", "User", "Nice", "Sys", "Idle", "IOwait", "Irq", "Softirq", "Steal"}
-var mem_column []string = []string{"Timestamp", "Usage%", "Total", "Free", "Available", "Buffers", "Cached"}
-
-func (self *Resource_Struct) ErrorHandler() {
-	self.Logwriter.Fd.Close()
-}
+var (
+	cpu_column []string = []string{"Timestamp", "Usage%", "User", "Nice", "Sys", "Idle", "IOwait", "Irq", "Softirq", "Steal"}
+	mem_column []string = []string{"Timestamp", "Usage%", "Total", "Free", "Available", "Buffers", "Cached"}
+)
 
 func GetCPUStat() (time.Time, []string, error) {
 	fd, err := os.Open(statfile)
@@ -77,7 +83,7 @@ func GetCPUStat() (time.Time, []string, error) {
 	return ts, slice, nil
 }
 
-func (self *Resource_Struct) CPULoopThread() {
+func (self Resource) CPULoopThread() {
 	go func() {
 		ts, slice, err := GetCPUStat()
 		if err != nil {
@@ -98,7 +104,6 @@ func (self *Resource_Struct) CPULoopThread() {
 		}
 		self.Prev.Total = self.Prev.User + self.Prev.Nice + self.Prev.Sys + self.Prev.Idle + self.Prev.IOwait + self.Prev.Irq + self.Prev.Softirq + self.Prev.Steal
 
-		inter := time.Duration(self.Interval * int(time.Millisecond))
 		var content []string = make([]string, 10, 10)
 		for {
 			ts, slice, err = GetCPUStat()
@@ -133,14 +138,12 @@ func (self *Resource_Struct) CPULoopThread() {
 			content[9] = strconv.Itoa(self.Current.Steal)
 			self.Logwriter.Write(content)
 			self.Prev = self.Current
-			time.Sleep(inter)
 		}
 	}()
 }
 
-func (self *Resource_Struct) MEMLoopThread() {
+func (self *Resource) MEMLoopThread() {
 	go func() {
-		inter := time.Duration(self.Interval * int(time.Millisecond))
 		var content []string = make([]string, 7, 7)
 		var ts time.Time
 		var Usage float32
@@ -190,33 +193,116 @@ func (self *Resource_Struct) MEMLoopThread() {
 			content[5] = strconv.Itoa(int_buf[3])
 			content[6] = strconv.Itoa(int_buf[4])
 			self.Logwriter.Write(content)
-			time.Sleep(inter)
 		}
 	}()
 }
 
-func StartCPU(interval int, filename string) {
-	loginstance, err := logwriter.MakeWriterWithOverride(filename, cpu_column)
+func GetMEMStat() (time.Time, []int, error) {
+	ts := time.Now()
+	fd, err := os.Open(meminfofile)
 	if err != nil {
-		panic.Error(err)
+		return time.Time{}, nil, err
 	}
-	cpu_resource_instance = new(Resource_Struct)
-	cpu_resource_instance.Logwriter = loginstance
-	cpu_resource_instance.Interval = interval
-	panic.Add(cpu_resource_instance.ErrorHandler)
+	defer fd.Close()
 
-	cpu_resource_instance.CPULoopThread()
+	var int_buf []int = make([]int, 3)
+	reader := bufio.NewReader(fd)
+	for i := 0; i < 3; i++ {
+		input, err := reader.ReadString('\n')
+		if err != nil {
+			return time.Time{}, nil, err
+		}
+		slice := strings.Split(input, " ")
+		for j := 0; j < len(slice); {
+			ctx := slice[j]
+			if ctx == "" {
+				if j == len(slice)-1 {
+					slice = slice[:j]
+				} else {
+					slice = append(slice[:j], slice[j+1:]...)
+				}
+				continue
+			}
+			j++
+		}
+
+		int_buf[i], err = strconv.Atoi(slice[1])
+		if err != nil {
+			return time.Time{}, nil, err
+		}
+	}
+
+	return ts, int_buf, nil
 }
 
-func StartMEM(interval int, filename string) {
-	loginstance, err := logwriter.MakeWriterWithOverride(filename, mem_column)
-	if err != nil {
-		panic.Error(err)
-	}
-	mem_resource_instance = new(Resource_Struct)
-	mem_resource_instance.Logwriter = loginstance
-	mem_resource_instance.Interval = interval
-	panic.Add(cpu_resource_instance.ErrorHandler)
+func DecodeMEMStat(stat []int, mem *MEMStat) {
+	mem.Total = stat[0]
+	mem.Available = stat[1]
+	return
+}
 
-	mem_resource_instance.MEMLoopThread()
+func DecodeCPUStat(stat []string, cpu *CPU) error {
+	var err error
+	cpu.User, err = strconv.Atoi(stat[1])
+	cpu.Nice, err = strconv.Atoi(stat[2])
+	cpu.Sys, err = strconv.Atoi(stat[3])
+	cpu.Idle, err = strconv.Atoi(stat[4])
+	cpu.IOwait, err = strconv.Atoi(stat[5])
+	cpu.Irq, err = strconv.Atoi(stat[6])
+	cpu.Softirq, err = strconv.Atoi(stat[7])
+	cpu.Steal, err = strconv.Atoi(stat[8])
+
+	cpu.Total = cpu.User + cpu.Nice + cpu.Sys + cpu.Idle + cpu.IOwait + cpu.Irq + cpu.Softirq + cpu.Steal
+	return err
+}
+
+func (self *Resource) NewCPUStat() error {
+	ts, cpustat, err := GetCPUStat()
+	if err != nil {
+		return err
+	}
+
+	self.CPUStat.Prev = self.CPUStat.Current
+
+	err = DecodeCPUStat(cpustat, &self.CPUStat.Current)
+	if err != nil {
+		return err
+	}
+	self.CPUStat.Current.Ts = ts
+	return nil
+}
+
+func (self *Resource) NewMEMStat() error {
+	ts, memstat, err := GetMEMStat()
+	if err != nil {
+		return err
+	}
+
+	DecodeMEMStat(memstat, &self.MEMStat)
+	self.MEMStat.Ts = ts
+	return nil
+}
+
+func Init() (Resource, error) {
+	var new_resource Resource
+	ts, cpustat, err := GetCPUStat()
+	if err != nil {
+		return Resource{}, err
+	}
+
+	err = DecodeCPUStat(cpustat, &new_resource.CPUStat.Current)
+	if err != nil {
+		return Resource{}, err
+	}
+	new_resource.CPUStat.Prev.Ts = ts
+
+	ts, memstat, err := GetMEMStat()
+	if err != nil {
+		return Resource{}, err
+	}
+
+	DecodeMEMStat(memstat, &new_resource.MEMStat)
+	new_resource.MEMStat.Ts = ts
+
+	return new_resource, nil
 }

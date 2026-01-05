@@ -28,9 +28,10 @@ type CPUStat struct {
 }
 
 type CPU struct {
-	Usage   float32
 	Ts      time.Time
+	Usage   float32
 	Total   int
+	Used    int
 	User    int
 	Nice    int
 	Sys     int
@@ -47,8 +48,8 @@ const (
 )
 
 var (
-	cpu_column []string = []string{"Timestamp", "Usage%", "User", "Nice", "Sys", "Idle", "IOwait", "Irq", "Softirq", "Steal"}
-	mem_column []string = []string{"Timestamp", "Usage%", "Total", "Free", "Available", "Buffers", "Cached"}
+	Cpu_column []string = []string{"Timestamp", "Usage%", "User", "Nice", "Sys", "Idle", "IOwait", "Irq", "Softirq", "Steal"}
+	Mem_column []string = []string{"Timestamp", "Usage%", "Total", "Free", "Available", "Buffers", "Cached"}
 )
 
 func GetCPUStat() (time.Time, []string, error) {
@@ -253,6 +254,7 @@ func DecodeCPUStat(stat []string, cpu *CPU) error {
 	cpu.Steal, err = strconv.Atoi(stat[8])
 
 	cpu.Total = cpu.User + cpu.Nice + cpu.Sys + cpu.Idle + cpu.IOwait + cpu.Irq + cpu.Softirq + cpu.Steal
+	cpu.Used = cpu.Total - cpu.Idle - cpu.IOwait
 	return err
 }
 
@@ -268,7 +270,12 @@ func (self *Resource) NewCPUStat() error {
 	if err != nil {
 		return err
 	}
-	self.CPUStat.Current.Ts = ts
+	self.Current.Ts = ts
+	if self.Current.Total-self.Prev.Total == 0 {
+		self.Current.Usage = 0.0
+	} else {
+		self.Current.Usage = float32(self.Current.Used-self.Prev.Used) / float32(self.Current.Total-self.Prev.Total)
+	}
 	return nil
 }
 

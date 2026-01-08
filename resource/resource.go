@@ -239,7 +239,7 @@ func GetMEMStat() (time.Time, []int, error) {
 
 func DecodeMEMStat(stat []int, mem *MEMStat) {
 	mem.Total = stat[0]
-	mem.Available = stat[1]
+	mem.Available = stat[2]
 	mem.Used = mem.Total - mem.Available
 	return
 }

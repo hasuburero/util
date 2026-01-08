@@ -33,7 +33,7 @@ func (self *RingBuffer) Push(content BufferContent) BufferContent {
 }
 
 func (self *RingBuffer) Get() []BufferContent {
-	bc := make([]BufferContent, 0, self.Size)
+	var bc []BufferContent
 	for i := self.Head; i != self.Tail; i = (i + 1) % (self.Size + 1) {
 		bc = append(bc, self.Content[i])
 	}

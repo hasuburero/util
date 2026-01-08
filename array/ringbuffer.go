@@ -35,6 +35,9 @@ func (self *RingBuffer) Push(content BufferContent) BufferContent {
 func (self *RingBuffer) Get() []BufferContent {
 	var bc []BufferContent
 	for i := self.Head; i != self.Tail; i = (i + 1) % (self.Size + 1) {
+		//if i == self.Tail {
+		//	break
+		//}
 		bc = append(bc, self.Content[i])
 	}
 
